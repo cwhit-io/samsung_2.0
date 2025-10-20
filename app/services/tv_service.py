@@ -249,7 +249,10 @@ class TVService:
                         "timestamp": datetime.now().isoformat()
                     }
                 
-                # Run the script
+                # Run the script - use system python if venv doesn't exist
+                if not python_path.exists():
+                    python_path = Path("/usr/local/bin/python")
+                
                 cmd_args = [str(python_path), str(script_path), tv_id] + args
                 result = subprocess.run(
                     cmd_args,

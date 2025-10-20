@@ -82,9 +82,29 @@ cp tokens.json.template tokens.json
 ```
 
 ### 4. Start the API Server
+
+#### Option A: Local Development
 ```bash
 cd samsung_2.0
 uvicorn app.main:app --host 127.0.0.1 --port 8002 --reload
+```
+
+#### Option B: Docker Deployment
+```bash
+# Build and run with Docker Compose (recommended)
+docker-compose up -d
+
+# Or use the deployment script
+./docker-deploy.sh build-and-run
+
+# Or manual Docker commands
+docker build -t samsung-tv-controller .
+docker run -d --name samsung-tv-controller \
+  -p 8002:8002 \
+  -v $(pwd)/tokens.json:/app/tokens.json \
+  -v $(pwd)/logs:/app/logs \
+  -v $(pwd)/config:/app/config:ro \
+  samsung-tv-controller
 ```
 
 ### 5. Access the API Documentation
@@ -268,9 +288,62 @@ The system includes comprehensive error handling:
 - **Script Logs** - Individual script execution details in `logs/` directory
 - **Error Tracking** - Comprehensive error capture and reporting
 
+## � Docker Deployment
+
+### Quick Start with Docker
+```bash
+# Using Docker Compose (recommended)
+docker-compose up -d
+
+# Check status
+docker-compose ps
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+### Using Deployment Script
+```bash
+# Build and run
+./docker-deploy.sh build-and-run
+
+# Available commands
+./docker-deploy.sh {build|run|build-and-run|stop|restart|logs|status|clean}
+```
+
+### Docker Features
+- **🔄 Auto-restart** - Container restarts on failure
+- **💾 Volume Persistence** - Tokens and logs persist across container restarts
+- **🏥 Health Checks** - Built-in API health monitoring
+- **🔒 Security** - Non-root user inside container
+- **📊 Monitoring** - Container status and logs accessible
+
+### Production Deployment
+```bash
+# Manual deployment with volume mounts
+docker run -d --name samsung-tv-controller \
+  --restart unless-stopped \
+  -p 8002:8002 \
+  -v $(pwd)/tokens.json:/app/tokens.json \
+  -v $(pwd)/logs:/app/logs \
+  -v $(pwd)/config/config.json:/app/config/config.json:ro \
+  samsung-tv-controller
+
+# For environments without docker-compose, use the deployment script
+./docker-deploy.sh build-and-run
+```
+
+### Volume Mounts Explained
+- **`tokens.json`** - Persistent TV authentication tokens
+- **`logs/`** - API and script execution logs
+- **`config/config.json`** - TV configuration (read-only)
+
 ## 🔧 Development
 
-### Running Tests
+### Local Development
 ```bash
 # Test individual scripts
 python scripts/power_status.py living_room_tv
@@ -279,10 +352,26 @@ python scripts/power_status.py living_room_tv
 curl -X GET http://127.0.0.1:8002/api/v1/tv/list
 ```
 
+### Docker Development
+```bash
+# Build development image
+docker build -t samsung-tv-controller:dev .
+
+# Run with code mounting for development
+docker run -it --rm \
+  -p 8002:8002 \
+  -v $(pwd):/app \
+  samsung-tv-controller:dev
+```
+
 ### Adding Dependencies
 ```bash
+# Local development
 pip install new-package
 pip freeze > requirements.txt
+
+# Rebuild Docker image after dependency changes
+docker-compose build
 ```
 
 ## 🤝 Contributing
