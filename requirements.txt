@@ -3,3 +3,4 @@ uvicorn
 samsungtvws
 pydantic
 python-multipart
+wakeonlan
