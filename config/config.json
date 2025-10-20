@@ -1,0 +1,109 @@
+{
+  "tvs": [
+    {
+      "id": "b4_tv",
+      "name": "B4 TV",
+      "host": "10.10.97.123",
+      "port": 8002,
+      "mac_address": "28:AF:42:4D:39:8E"
+    },
+    {
+      "id": "m2_tv",
+      "name": "M2 TV",
+      "host": "10.10.97.132",
+      "port": 8002,
+      "mac_address": "28:AF:42:30:92:78"
+    },
+    {
+      "id": "b3_tv",
+      "name": "B3 TV",
+      "host": "10.10.97.122",
+      "port": 8002,
+      "mac_address": "04:E4:B6:C7:7A:46"
+    },
+    {
+      "id": "m4_tv",
+      "name": "M4 TV",
+      "host": "10.10.97.128",
+      "port": 8002,
+      "mac_address": "28:AF:42:4D:3B:50"
+    },
+    {
+      "id": "t1_tv",
+      "name": "T1 TV",
+      "host": "10.10.97.138",
+      "port": 8002,
+      "mac_address": "28:AF:42:30:A3:0A"
+    },
+    {
+      "id": "t4_tv",
+      "name": "T4 TV",
+      "host": "10.10.97.126",
+      "port": 8002,
+      "mac_address": "28:AF:42:30:A9:86"
+    },
+    {
+      "id": "m3_tv",
+      "name": "M3 TV",
+      "host": "10.10.97.120",
+      "port": 8002,
+      "mac_address": "04:E4:B6:C7:7C:80"
+    },
+    {
+      "id": "t3_tv",
+      "name": "T3 TV",
+      "host": "10.10.97.86",
+      "port": 8002,
+      "mac_address": "04:E4:B6:C7:2A:02"
+    },
+    {
+      "id": "m1_tv",
+      "name": "M1 TV",
+      "host": "10.10.97.137",
+      "port": 8002,
+      "mac_address": "28:AF:42:30:9E:FA"
+    },
+    {
+      "id": "t2_tv",
+      "name": "T2 TV",
+      "host": "10.10.97.78",
+      "port": 8002,
+      "mac_address": "28:AF:42:30:B0:D0"
+    },
+    {
+      "id": "b1_tv",
+      "name": "B1 TV",
+      "host": "10.10.97.133",
+      "port": 8002,
+      "mac_address": "04:E4:B6:C7:7E:64"
+    },
+    {
+      "id": "t5_tv",
+      "name": "T5 TV",
+      "host": "10.10.97.125",
+      "port": 8002,
+      "mac_address": "28:AF:42:30:A0:A4"
+    },
+    {
+      "id": "b2_tv",
+      "name": "B2 TV",
+      "host": "10.10.97.121",
+      "port": 8002,
+      "mac_address": "04:E4:B6:C7:B9:D0"
+    },
+    {
+      "id": "m5_tv",
+      "name": "M5 TV",
+      "host": "10.10.97.130",
+      "port": 8002,
+      "mac_address": "28:AF:42:4D:3F:20"
+    },
+    {
+      "id": "b5_tv",
+      "name": "B5 TV",
+      "host": "10.10.97.159",
+      "port": 8002,
+      "mac_address": "28:AF:42:4D:B0:50"
+    }
+  ]
+}
