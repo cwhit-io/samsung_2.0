@@ -1,19 +1,52 @@
-FROM python:3.9
+FROM python:3.11-slim
 
-# Set the working directory in the container
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+# Set work directory
 WORKDIR /app
 
-# Copy the requirements file into the container
+# Install system dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        gcc \
+        curl \
+        iputils-ping \
+        net-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install the dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Copy the entire application into the container
-COPY . .
+# Copy application code
+COPY app/ ./app/
+COPY scripts/ ./scripts/
+COPY config/ ./config/
 
-# Expose the port the app runs on
-EXPOSE 8000
+# Create necessary directories
+RUN mkdir -p logs
 
-# Command to run the FastAPI application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash app \
+    && chown -R app:app /app
+
+# Create empty tokens.json if it doesn't exist
+RUN touch tokens.json && chown app:app tokens.json
+
+USER app
+
+# Expose port
+EXPOSE 8002
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8002/api/v1/tv/list || exit 1
+
+# Command to run the application
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002"]

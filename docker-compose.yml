@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  samsung-tv-api:
+    build: .
+    container_name: samsung-tv-controller
+    ports:
+      - "8002:8002"
+    volumes:
+      # Mount tokens.json to persist authentication tokens
+      - ./tokens.json:/app/tokens.json
+      # Mount logs directory to persist logs
+      - ./logs:/app/logs
+      # Mount config file specifically to avoid permission issues
+      - ./config/config.json:/app/config/config.json:ro
+    environment:
+      - PYTHONPATH=/app
+    networks:
+      - tv-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/api/v1/tv/list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  tv-network:
+    driver: bridge
