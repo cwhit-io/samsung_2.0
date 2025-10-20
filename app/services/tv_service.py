@@ -213,49 +213,41 @@ class TVService:
         )
     
     @staticmethod
-    def execute_script(script_name: str, tv_ids: List[str], args: List[str] = None, concurrent: bool = True) -> dict:
-        """Generic script executor - works with any script in /scripts/ folder
+    def execute_script(script_name: str, tv_ids: List[str], args: List[str] = None, concurrent: bool = True) -> GenericScriptResponse:
+        """Generic script executor for any TV script"""
+        start_time = time.time()
+        args = args or []
+        results = []
         
-        Args:
-            script_name: Name of script file (without .py extension)
-            tv_ids: List of TV IDs to process
-            args: Additional arguments to pass to script
-            concurrent: Whether to run multiple TVs concurrently
+        # Define python path once at the top level
+        venv_python = PROJECT_ROOT / ".venv" / "bin" / "python"
+        if venv_python.exists():
+            python_path = str(venv_python)
+        else:
+            python_path = "python3"
         
-        Returns:
-            Dict with results for each TV
-        """
-        script_path = PROJECT_ROOT / "scripts" / f"{script_name}.py"
-        python_path = PROJECT_ROOT / ".venv" / "bin" / "python"
-        args = args or []  # Handle None case
-        
-        if not script_path.exists():
-            return {
-                "error": f"Script '{script_name}.py' not found in scripts folder",
-                "results": []
-            }
-        
-        def run_single_tv(tv_id: str) -> dict:
+        def execute_single_script(tv_id):
             """Execute script for a single TV"""
+            tv_start_time = time.time()
+            
             try:
-                # Validate TV exists first
-                validation = TVService.validate_tv_exists(tv_id)
-                if not validation.exists:
+                script_path = PROJECT_ROOT / "scripts" / f"{script_name}.py"
+                
+                # Check if script exists
+                if not script_path.exists():
                     return {
                         "tv_id": tv_id,
-                        "status": "not_found",
-                        "output": f"TV ID '{tv_id}' not found in configuration",
+                        "status": "error",
+                        "output": f"Script '{script_name}.py' not found",
                         "success": False,
                         "timestamp": datetime.now().isoformat()
                     }
                 
-                # Run the script - use system python if venv doesn't exist
-                if not python_path.exists():
-                    python_path = Path("/usr/local/bin/python")
+                # Build command: python script.py tv_id [args...]
+                cmd = [python_path, str(script_path), tv_id] + args
                 
-                cmd_args = [str(python_path), str(script_path), tv_id] + args
                 result = subprocess.run(
-                    cmd_args,
+                    cmd,
                     capture_output=True,
                     text=True,
                     timeout=30,
@@ -264,9 +256,8 @@ class TVService:
                 
                 return {
                     "tv_id": tv_id,
-                    "status": "success" if result.returncode == 0 else "failed",
-                    "output": result.stdout.strip(),
-                    "error": result.stderr.strip() if result.stderr.strip() else None,
+                    "status": "success" if result.returncode == 0 else "error",
+                    "output": result.stdout.strip() if result.stdout else (result.stderr.strip() if result.stderr else "No output"),
                     "success": result.returncode == 0,
                     "timestamp": datetime.now().isoformat()
                 }
@@ -274,8 +265,8 @@ class TVService:
             except subprocess.TimeoutExpired:
                 return {
                     "tv_id": tv_id,
-                    "status": "timeout",
-                    "output": f"Script '{script_name}' timed out for TV {tv_id}",
+                    "status": "error",
+                    "output": "Script execution timed out after 30 seconds",
                     "success": False,
                     "timestamp": datetime.now().isoformat()
                 }
@@ -288,51 +279,43 @@ class TVService:
                     "timestamp": datetime.now().isoformat()
                 }
         
-        start_time = time.time()
-        results = []
-        
+        # Execute scripts
         if concurrent and len(tv_ids) > 1:
-            # Run concurrently with threads
-            max_workers = len(tv_ids)
-            with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                future_to_tv_id = {executor.submit(run_single_tv, tv_id): tv_id for tv_id in tv_ids}
-                for future in as_completed(future_to_tv_id):
-                    result = future.result()
-                    results.append(result)
+            # Concurrent execution
+            with ThreadPoolExecutor(max_workers=len(tv_ids)) as executor:
+                future_to_tv = {executor.submit(execute_single_script, tv_id): tv_id for tv_id in tv_ids}
+                
+                for future in as_completed(future_to_tv):
+                    results.append(future.result())
         else:
-            # Run sequentially
+            # Sequential execution
             for tv_id in tv_ids:
-                result = run_single_tv(tv_id)
-                results.append(result)
+                results.append(execute_single_script(tv_id))
         
-        # Sort results by TV ID for consistent ordering
-        results.sort(key=lambda x: x["tv_id"])
+        # Sort results by TV ID for consistent output
+        results.sort(key=lambda x: x['tv_id'])
         
         # Generate summary
-        execution_time = time.time() - start_time
-        success_count = sum(1 for r in results if r["success"])
-        failed_count = sum(1 for r in results if r["status"] == "failed")
-        not_found_count = sum(1 for r in results if r["status"] == "not_found")
-        error_count = sum(1 for r in results if r["status"] in ["timeout", "error"])
+        end_time = time.time()
+        execution_time = end_time - start_time
         
-        summary = f"Executed '{script_name}' on {len(results)} TVs in {execution_time:.2f}s: "
-        summary += f"{success_count} successful"
-        if failed_count > 0:
-            summary += f", {failed_count} failed"
-        if not_found_count > 0:
-            summary += f", {not_found_count} not found"
-        if error_count > 0:
-            summary += f", {error_count} errors"
+        successful = len([r for r in results if r['success']])
+        failed = len(results) - successful
         
-        return {
-            "script_name": script_name,
-            "total_requested": len(tv_ids),
-            "results": results,
-            "summary": summary,
-            "execution_time_seconds": round(execution_time, 2),
-            "concurrent": concurrent and len(tv_ids) > 1
-        }
-    
+        if failed > 0:
+            summary = f"Executed '{script_name}' on {len(tv_ids)} TVs in {execution_time:.2f}s: {successful} successful, {failed} errors"
+        else:
+            summary = f"Executed '{script_name}' on {len(tv_ids)} TVs in {execution_time:.2f}s: {successful} successful"
+        
+        return GenericScriptResponse(
+            script_name=script_name,
+            total_requested=len(tv_ids),
+            results=results,
+            summary=summary,
+            execution_time_seconds=execution_time,
+            concurrent=concurrent
+        )
+
     @staticmethod
     def _load_tokens() -> dict:
         """Load pairing tokens from tokens.json"""
