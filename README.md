@@ -74,13 +74,20 @@ Update `config/config.json` with your TV information:
 }
 ```
 
-### 3. Start the API Server
+### 3. Initialize Token Storage
+```bash
+# Copy the template (tokens.json is auto-created when pairing)
+cp tokens.json.template tokens.json
+# tokens.json is excluded from git for security
+```
+
+### 4. Start the API Server
 ```bash
 cd samsung_2.0
 uvicorn app.main:app --host 127.0.0.1 --port 8002 --reload
 ```
 
-### 4. Access the API Documentation
+### 5. Access the API Documentation
 - **Interactive Docs**: http://127.0.0.1:8002/docs
 - **Alternative Docs**: http://127.0.0.1:8002/redoc
 - **OpenAPI Schema**: http://127.0.0.1:8002/openapi.json
@@ -289,7 +296,21 @@ pip freeze > requirements.txt
 
 This project is licensed under the MIT License.
 
-## 🙏 Acknowledgments
+## � Security
+
+### Authentication Tokens
+- **`tokens.json`** contains sensitive authentication tokens
+- **Excluded from git** via `.gitignore` for security
+- **Auto-generated** when pairing TVs via API
+- **Template available** at `tokens.json.template`
+
+### Best Practices
+- Never commit `tokens.json` to version control
+- Regenerate tokens if compromised (re-pair TVs)
+- Keep the API server on internal network only
+- Use HTTPS in production environments
+
+## �🙏 Acknowledgments
 
 - Built with [FastAPI](https://fastapi.tiangolo.com/)
 - Samsung TV integration via [samsungtvws](https://github.com/xchwarze/samsung-tv-ws-api)
